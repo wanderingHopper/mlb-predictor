@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compare MLB teams using a student-built baseball statistics model.">
+  <meta name="theme-color" content="#f6f5f1">
+  <title>Diamond Matchup | Baseball statistics, side by side</title>
+  <style>
+    :root {
+      --page: #f6f5f1;
+      --paper: #fffefa;
+      --ink: #202b32;
+      --muted: #657078;
+      --hairline: #d9dcd8;
+      --navy: #243e4d;
+      --blue: #426778;
+      --rust: #b56149;
+      --track: #e9e9e4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--page);
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; line-height: 1.5; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    .wrap { max-width: 1120px; width: calc(100% - 64px); margin-inline: auto; }
+    a { color: inherit; }
+    .masthead { background: var(--paper); border-bottom: 1px solid var(--hairline); }
+    .masthead .wrap { display: flex; justify-content: space-between; align-items: center; gap: 18px; min-height: 74px; }
+    .wordmark { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: -.025em; font-size: 18px; }
+    .mark { display: inline-block; width: 12px; height: 12px; transform: rotate(45deg); background: var(--rust); flex: 0 0 auto; }
+    .topnote { font-size: 11px; letter-spacing: .095em; text-transform: uppercase; color: var(--muted); font-weight: 650; }
+    main { padding-top: 70px; padding-bottom: 88px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 60px; align-items: end; margin-bottom: 48px; }
+    .eyebrow, .overline { text-transform: uppercase; color: var(--rust); font-size: 11px; font-weight: 750; letter-spacing: .115em; margin: 0; }
+    h1 { font-family: Georgia, "Times New Roman", serif; font-weight: normal; font-size: clamp(46px, 5.5vw, 74px); line-height: 1.07; letter-spacing: -.05em; max-width: 740px; margin: 19px 0 17px; }
+    .lead { max-width: 620px; color: #59656c; font-size: 16px; line-height: 1.7; margin: 0; }
+    .hero-facts { border-top: 2px solid var(--ink); padding-top: 15px; }
+    .hero-facts .caption { margin: 0 0 11px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .095em; font-weight: 700; }
+    .fact { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid var(--hairline); font-size: 12px; }
+    .fact b { font-size: 14px; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .workbench { display: grid; grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); background: var(--paper); border: 1px solid var(--hairline); border-top: 3px solid var(--ink); }
+    .choose { padding: 36px 35px 30px; border-right: 1px solid var(--hairline); }
+    .results { padding: 36px 38px 29px; min-width: 0; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 24px; }
+    .section-head .overline { color: var(--muted); }
+    .section-head .section-index { font-size: 12px; color: #8b938f; font-variant-numeric: tabular-nums; }
+    h2 { font-family: Georgia, "Times New Roman", serif; font-weight: normal; letter-spacing: -.025em; font-size: 30px; line-height: 1.2; margin: 0 0 13px; }
+    .panel-lead { color: var(--muted); margin: 0 0 30px; font-size: 13px; }
+    label { display: block; color: #58636a; font-size: 11px; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; margin-bottom: 8px; }
+    select { width: 100%; min-height: 52px; color: var(--ink); padding: 12px 37px 12px 14px; appearance: none; border: 1px solid #bbc3c1; border-radius: 3px; background-color: var(--paper); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%2346535c' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-position: right 13px center; background-repeat: no-repeat; font-size: 14px; font-weight: 600; }
+    select:focus-visible, button:focus-visible { outline: 3px solid #6d93a5; outline-offset: 2px; }
+    .versus { margin: 13px 0; text-align: center; font-size: 12px; color: #8c9497; font-weight: 700; }
+    .primary { display: block; width: 100%; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 3px; min-height: 52px; margin-top: 26px; font-size: 14px; font-weight: 650; }
+    .primary:hover { background: #355466; }
+    .error { color: #9a382b; font-size: 13px; font-weight: 650; margin: 11px 0 0; min-height: 0; }
+    .error:empty { display: none; }
+    .tiny-note { margin: 29px 0 0; border-top: 1px solid var(--hairline); padding-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .result-title { font-size: 30px; }
+    .team-grid { display: grid; grid-template-columns: minmax(0,1fr) 34px minmax(0,1fr); gap: 12px; align-items: start; margin-top: 34px; }
+    .team-box { min-width: 0; }
+    .team-box.away { text-align: right; }
+    .team-code { font-size: 11px; font-weight: 800; letter-spacing: .13em; color: var(--blue); margin-bottom: 8px; }
+    .team-box.away .team-code { color: var(--rust); }
+    .team-name { line-height: 1.35; min-height: 40px; font-size: 15px; font-weight: 650; overflow-wrap: break-word; }
+    .team-percent { font-family: Georgia, "Times New Roman", serif; letter-spacing: -.06em; font-variant-numeric: lining-nums tabular-nums; font-size: clamp(37px, 4.2vw, 56px); margin: 12px 0 0; line-height: 1.15; color: var(--navy); }
+    .away .team-percent { color: var(--rust); }
+    .vs { text-align: center; color: #a2a9a9; font-size: 11px; font-weight: 750; padding-top: 33px; }
+    .score-track { display: flex; height: 8px; width: 100%; margin: 19px 0 11px; background: var(--track); overflow: hidden; }
+    .score-track .first { display: block; background: var(--blue); width: 50%; transition: width .2s; }
+    .score-track .second { flex: 1; display: block; background: var(--rust); }
+    .score-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; color: var(--muted); font-size: 11px; }
+    .score-explainer { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 13px 0 0; }
+    .result-meta { border-top: 1px solid var(--hairline); margin-top: 32px; padding-top: 19px; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 18px; }
+    .winner small { color: var(--muted); font-size: 11px; display: block; margin-bottom: 5px; }
+    .winner strong { color: var(--ink); font-size: 14px; font-weight: 750; }
+    .share { color: var(--navy); background: none; border: 0; border-bottom: 1px solid var(--navy); padding: 0 0 3px; border-radius: 0; font-weight: 650; font-size: 12px; }
+    .share:hover { color: #527b8c; border-bottom-color: #527b8c; }
+    .detail-section { margin-top: 65px; }
+    .detail-top { display: flex; justify-content: space-between; align-items: end; gap: 22px; padding-bottom: 17px; border-bottom: 2px solid var(--ink); margin-bottom: 28px; }
+    .detail-top h2 { margin: 0; }
+    .detail-top .panel-lead { margin: 0; max-width: 420px; }
+    .details { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 44px; }
+    .detail-card { padding: 0; }
+    .detail-card h3 { font-size: 13px; letter-spacing: .015em; margin: 0 0 4px; font-weight: 750; }
+    .detail-card p { font-size: 12px; color: var(--muted); margin: 0 0 21px; }
+    .detail-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 7px; }
+    .detail-row strong { font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .detail-track { height: 6px; width: 100%; background: var(--track); margin-bottom: 21px; }
+    .bar-a,.bar-b { height: 100%; }
+    .bar-a { background: var(--blue); }
+    .bar-b { background: var(--rust); }
+    .method { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--hairline); display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+    .method h3 { font-family: Georgia, "Times New Roman", serif; font-weight: normal; letter-spacing: -.02em; font-size: 24px; margin: 0; }
+    .method p { font-size: 13px; color: #5d676e; margin: 0 0 10px; line-height: 1.75; }
+    .method .disclaimer { color: #725647; }
+    footer { border-top: 1px solid var(--hairline); padding: 23px 0 42px; color: var(--muted); background: var(--paper); font-size: 11px; line-height: 1.8; }
+
+    /* Team marks stay small: identification, not decoration. */
+    .team-select { position: relative; }
+    .team-select select { padding-left: 57px; }
+    .select-logo { position: absolute; width: 30px; height: 30px; left: 14px; top: 50%; transform: translateY(-50%); object-fit: contain; pointer-events: none; }
+    .team-identity { display: flex; align-items: center; gap: 10px; min-height: 56px; }
+    .team-box.away .team-identity { justify-content: flex-end; }
+    .team-identity > div { min-width: 0; }
+    .result-logo { width: 52px; height: 52px; object-fit: contain; flex: 0 0 auto; }
+    .select-logo[hidden], .result-logo[hidden] { display: none; }
+    @media (max-width: 620px) {
+      .team-identity { gap: 5px; align-items: flex-start; min-height: 52px; }
+      .result-logo { width: 32px; height: 32px; }
+    }
+
+    /* Optional model experiments: folded away until the visitor asks for them. */
+    .tuning { margin-top: 20px; border-top: 1px solid var(--hairline); padding-top: 16px; }
+    .tuning summary, .tuning-advanced summary { cursor: pointer; color: var(--navy); font-weight: 700; font-size: 13px; }
+    .tuning summary:hover, .tuning-advanced summary:hover { text-decoration: underline; }
+    .tuning-inner { padding: 17px 0 0; }
+    .tuning-note { margin: 0 0 15px; font-size: 12px; line-height: 1.55; color: var(--muted); }
+    .weight-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 11px 0 5px; }
+    .weight-line label { margin: 0; font-size: 11px; letter-spacing: .01em; text-transform: none; }
+    .weight-line output { font-size: 12px; font-weight: 750; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .tuning input[type=range] { width: 100%; margin: 0 0 10px; accent-color: var(--navy); cursor: pointer; }
+    .tuning input[type=range]:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .tuning-advanced { border-top: 1px solid var(--hairline); margin-top: 13px; padding-top: 16px; }
+    .stat-group { margin-top: 19px; }
+    .stat-group h3 { margin: 0 0 13px; font-size: 12px; }
+    .stat-group .weight-line { margin-top: 8px; }
+    .reset-weights { margin-top: 13px; background: transparent; color: var(--navy); border: 1px solid var(--hairline); padding: 9px 12px; font-size: 12px; font-weight: 650; border-radius: 3px; }
+    .reset-weights:hover { border-color: var(--navy); }
+    .custom-flag { font-size: 11px; color: var(--rust); margin: 10px 0 0; min-height: 16px; }
+    @media (max-width: 850px) {
+      .hero { grid-template-columns: 1fr; gap: 22px; }
+      .hero-facts { display: grid; grid-template-columns: 1fr repeat(3,minmax(0,1fr)); align-items: center; gap: 12px; }
+      .hero-facts .caption { margin: 0; }
+      .fact { display: block; padding: 0 0 0 12px; border-top: 0; border-left: 1px solid var(--hairline); }
+      .fact b { display: block; }
+      .workbench { grid-template-columns: 1fr; }
+      .choose { border-right: 0; border-bottom: 1px solid var(--hairline); }
+      .details { gap: 28px; }
+    }
+    @media (max-width: 620px) {
+      .wrap { width: calc(100% - 36px); }
+      .masthead .wrap { min-height: 64px; }
+      .wordmark { font-size: 16px; }
+      .topnote { font-size: 9px; text-align: right; }
+      main { padding-top: 42px; padding-bottom: 58px; }
+      h1 { font-size: clamp(42px, 10vw, 57px); }
+      .lead { font-size: 14px; }
+      .hero { margin-bottom: 32px; }
+      .hero-facts { grid-template-columns: repeat(3,1fr); gap: 8px; }
+      .hero-facts .caption { grid-column: 1/-1; }
+      .fact { font-size: 11px; }
+      .choose,.results { padding: 25px 20px; }
+      h2,.result-title { font-size: 26px; }
+      .team-grid { gap: 6px; grid-template-columns: minmax(0,1fr) 18px minmax(0,1fr); }
+      .vs { font-size: 10px; }
+      .team-name { font-size: 13px; min-height: 52px; }
+      .team-percent { font-size: clamp(34px, 9vw, 46px); }
+      .detail-section { margin-top: 46px; }
+      .detail-top { display: block; }
+      .detail-top h2 { margin-bottom: 8px; }
+      .details { grid-template-columns: 1fr; gap: 24px; }
+      .method { grid-template-columns: 1fr; gap: 10px; margin-top: 33px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *,*:before,*:after { transition: none!important; scroll-behavior: auto!important; } }
+  </style>
+</head>
+<body>
+  <header class="masthead"><div class="wrap">
+    <div class="wordmark"><span class="mark" aria-hidden="true"></span>Diamond Matchup</div>
+    <span class="topnote">An independent student project</span>
+  </div></header>
+  <main class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Major League Baseball / Team statistics</p>
+        <h1 id="hero-title">How do they stack up?</h1>
+        <p class="lead">Pick two MLB teams and see how their batting and pitching statistics compare using the model.</p>
+      </div>
+      <aside class="hero-facts" aria-label="Model summary">
+        <p class="caption">2026 season / model overview</p>
+        <div class="fact"><span>Teams</span><b>30</b></div>
+        <div class="fact"><span>Batting weight</span><b id="hero-offense">55%</b></div>
+        <div class="fact"><span>Pitching weight</span><b id="hero-pitching">45%</b></div>
+      </aside>
+    </section>
+    <div class="workbench">
+      <section class="choose" aria-labelledby="choose-title">
+        <div class="section-head"><p class="overline">Select a matchup</p><span class="section-index">01</span></div>
+        <h2 id="choose-title">Pick your teams</h2>
+        <p class="panel-lead">Choose any two clubs using 2026 regular-season data.</p>
+        <label for="team-a">First team</label>
+        <div class="team-select"><img id="select-logo-a" class="select-logo" alt="" aria-hidden="true"><select id="team-a" aria-label="First MLB team"></select></div>
+        <div class="versus" aria-hidden="true">versus</div>
+        <label for="team-b">Second team</label>
+        <div class="team-select"><img id="select-logo-b" class="select-logo" alt="" aria-hidden="true"><select id="team-b" aria-label="Second MLB team"></select></div>
+
+        <details class="tuning" id="tuning">
+          <summary>Adjust model weights (optional)</summary>
+          <div class="tuning-inner">
+            <p class="tuning-note">Explore how different assumptions change the result. The original model uses 55% offense and 45% pitching. Press Compare teams to apply changes.</p>
+            <div class="weight-line"><label for="mix">Offense / pitching balance</label><output id="mix-output" for="mix">55% / 45%</output></div>
+            <input type="range" id="mix" min="0" max="100" step="1" value="55" aria-label="Offense percentage; pitching receives the remainder">
+            <details class="tuning-advanced" id="advanced">
+              <summary>Fine-tune individual statistics</summary>
+              <p class="tuning-note" style="margin-top:12px">Weights are percentages within each category, rescaled to keep its total at 100%. Negative strikeout weight is a penalty. Select Compare teams to apply changes.</p>
+              <div class="stat-group"><h3>Batting statistics</h3><div id="offense-sliders"></div></div>
+              <div class="stat-group"><h3>Pitching statistics</h3><div id="pitching-sliders"></div></div>
+            </details>
+            <button class="reset-weights" id="reset-weights" type="button">Reset to original weights</button>
+            <p class="custom-flag" id="custom-flag" aria-live="polite"></p>
+          </div>
+        </details>
+        <button class="primary" id="compare" type="button">Compare teams &rarr;</button>
+        <p class="error" id="error" role="alert" aria-live="polite"></p>
+        <p class="tiny-note">Uses 2026 regular-season team statistics. No live lineups, odds or game-day adjustments.</p>
+      </section>
+      <section class="results" aria-labelledby="results-title">
+        <div class="section-head"><p class="overline">Comparison</p><span class="section-index">02</span></div>
+        <h2 class="result-title" id="results-title">The model's result</h2>
+        <div class="team-grid" aria-live="polite" aria-atomic="true">
+          <div class="team-box"><div class="team-identity"><img id="result-logo-a" class="result-logo" alt="" aria-hidden="true"><div><div class="team-code" id="badge-a">NYY</div><div class="team-name" id="name-a">New York Yankees</div></div></div><p class="team-percent" id="percent-a">60.9%</p></div>
+          <div class="vs">VS</div>
+          <div class="team-box away"><div class="team-identity"><div><div class="team-code" id="badge-b">NYM</div><div class="team-name" id="name-b">New York Mets</div></div><img id="result-logo-b" class="result-logo" alt="" aria-hidden="true"></div><p class="team-percent" id="percent-b">39.1%</p></div>
+        </div>
+        <div class="score-track" role="img" id="score-track" aria-label="Model score share: Yankees 60.9 percent, Mets 39.1 percent"><span class="first" id="share-a"></span><span class="second"></span></div>
+        <div class="score-caption"><span>Relative team strength</span><span>Based on season statistics, not exact game-win odds</span></div>
+        <p class="score-explainer">These percentages compare how strongly each team scores in the statistical model. A higher percentage means a stronger rating under the selected weights, not a predicted chance of winning.</p>
+        <div class="result-meta">
+          <div class="winner"><small>Higher model score</small><strong id="winner-name">New York Yankees</strong></div>
+          <button class="share" id="share" type="button">Copy matchup link &nearr;</button>
+        </div>
+      </section>
+    </div>
+    <section class="detail-section" aria-labelledby="detail-title">
+      <div class="detail-top"><h2 id="detail-title">Under the hood</h2><p class="panel-lead">Each team's underlying normalized scores, before the head-to-head comparison.</p></div>
+      <div class="details">
+        <div class="detail-card">
+          <h3>Offense <span id="offense-label" style="font-weight:400;color:var(--muted)">/ 55% weight</span></h3>
+          <p>Normalized batting performance</p>
+          <div class="detail-row"><span id="off-label-a">Yankees</span><strong id="off-val-a">0.502</strong></div>
+          <div class="detail-track"><div class="bar-a" id="off-bar-a"></div></div>
+          <div class="detail-row"><span id="off-label-b">Mets</span><strong id="off-val-b">0.339</strong></div>
+          <div class="detail-track"><div class="bar-b" id="off-bar-b"></div></div>
+        </div>
+        <div class="detail-card">
+          <h3>Pitching <span id="pitching-label" style="font-weight:400;color:var(--muted)">/ 45% weight</span></h3>
+          <p>Normalized pitching performance</p>
+          <div class="detail-row"><span id="pit-label-a">Yankees</span><strong id="pit-val-a">0.961</strong></div>
+          <div class="detail-track"><div class="bar-a" id="pit-bar-a"></div></div>
+          <div class="detail-row"><span id="pit-label-b">Mets</span><strong id="pit-val-b">0.597</strong></div>
+          <div class="detail-track"><div class="bar-b" id="pit-bar-b"></div></div>
+        </div>
+      </div>
+    </section>
+    <section class="method" aria-label="Model explanation">
+      <h3>A note on the method</h3>
+      <div>
+        <p>The model min-max normalizes 2026 regular-season batting and pitching statistics across all 30 teams, combines them using selected statistical weights, then blends the two scores (55% offense and 45% pitching). The head-to-head percentages are each team's share of the two combined scores. Optional weight adjustments are user experiments, not part of the original model.</p>
+        <p class="disclaimer">This is an exploratory statistical model, not a trained or back-tested probability forecast. The percentages are not validated win probabilities and should not be used for betting.</p>
+      </div>
+    </section>
+  </main>
+  <footer><div class="wrap">Model and original analysis by Ryan. Independent project; not affiliated with Major League Baseball. Team logos belong to their respective owners.</div></footer>
+  <script src="./scores.js"></script>
+  <script src="./features.js"></script>
+  <script src="./analytics-config.js"></script>
+  <script>
+    'use strict';
+    const dataset = Array.isArray(window.TEAM_SCORES) ? window.TEAM_SCORES : [];
+    const byName = new Map(dataset.map(t => [t.name, t]));
+    const shortNames = {
+      'Arizona Diamondbacks':'Diamondbacks', 'Athletics':'Athletics', 'Atlanta Braves':'Braves', 'Baltimore Orioles':'Orioles',
+      'Boston Red Sox':'Red Sox', 'Chicago Cubs':'Cubs', 'Chicago White Sox':'White Sox', 'Cincinnati Reds':'Reds',
+      'Cleveland Guardians':'Guardians', 'Colorado Rockies':'Rockies', 'Detroit Tigers':'Tigers', 'Houston Astros':'Astros',
+      'Kansas City Royals':'Royals', 'Los Angeles Angels':'Angels', 'Los Angeles Dodgers':'Dodgers', 'Miami Marlins':'Marlins',
+      'Milwaukee Brewers':'Brewers', 'Minnesota Twins':'Twins', 'New York Mets':'Mets', 'New York Yankees':'Yankees',
+      'Philadelphia Phillies':'Phillies', 'Pittsburgh Pirates':'Pirates', 'San Diego Padres':'Padres', 'Seattle Mariners':'Mariners',
+      'San Francisco Giants':'Giants', 'St. Louis Cardinals':'Cardinals', 'Tampa Bay Rays':'Rays', 'Texas Rangers':'Rangers',
+      'Toronto Blue Jays':'Blue Jays', 'Washington Nationals':'Nationals'
+    };
+    const codes = {
+      'Arizona Diamondbacks':'ARI', 'Athletics':'ATH', 'Atlanta Braves':'ATL', 'Baltimore Orioles':'BAL',
+      'Boston Red Sox':'BOS', 'Chicago Cubs':'CHC', 'Chicago White Sox':'CWS', 'Cincinnati Reds':'CIN',
+      'Cleveland Guardians':'CLE', 'Colorado Rockies':'COL', 'Detroit Tigers':'DET', 'Houston Astros':'HOU',
+      'Kansas City Royals':'KC', 'Los Angeles Angels':'LAA', 'Los Angeles Dodgers':'LAD', 'Miami Marlins':'MIA',
+      'Milwaukee Brewers':'MIL', 'Minnesota Twins':'MIN', 'New York Mets':'NYM', 'New York Yankees':'NYY',
+      'Philadelphia Phillies':'PHI', 'Pittsburgh Pirates':'PIT', 'San Diego Padres':'SD', 'Seattle Mariners':'SEA',
+      'San Francisco Giants':'SF', 'St. Louis Cardinals':'STL', 'Tampa Bay Rays':'TB', 'Texas Rangers':'TEX',
+      'Toronto Blue Jays':'TOR', 'Washington Nationals':'WSH'
+    };
+    const $ = id => document.getElementById(id);
+    // Official MLB team IDs identify the SVG marks from MLB's image CDN.
+    // ESPN's CDN serves as a fallback if a primary image fails to load.
+    const teamIds = {
+      'Arizona Diamondbacks': 109,
+      'Athletics': 133,
+      'Atlanta Braves': 144,
+      'Baltimore Orioles': 110,
+      'Boston Red Sox': 111,
+      'Chicago Cubs': 112,
+      'Chicago White Sox': 145,
+      'Cincinnati Reds': 113,
+      'Cleveland Guardians': 114,
+      'Colorado Rockies': 115,
+      'Detroit Tigers': 116,
+      'Houston Astros': 117,
+      'Kansas City Royals': 118,
+      'Los Angeles Angels': 108,
+      'Los Angeles Dodgers': 119,
+      'Miami Marlins': 146,
+      'Milwaukee Brewers': 158,
+      'Minnesota Twins': 142,
+      'New York Mets': 121,
+      'New York Yankees': 147,
+      'Philadelphia Phillies': 143,
+      'Pittsburgh Pirates': 134,
+      'San Diego Padres': 135,
+      'Seattle Mariners': 136,
+      'San Francisco Giants': 137,
+      'St. Louis Cardinals': 138,
+      'Tampa Bay Rays': 139,
+      'Texas Rangers': 140,
+      'Toronto Blue Jays': 141,
+      'Washington Nationals': 120
+    };
+    const espnCodes = {
+      'Athletics': 'oak', 'Chicago White Sox': 'chw', 'Kansas City Royals': 'kc',
+      'San Diego Padres': 'sd', 'San Francisco Giants': 'sf', 'Tampa Bay Rays': 'tb'
+    };
+    function displayLogo(elementId, teamName) {
+      const el = $(elementId);
+      const teamId = teamIds[teamName];
+      if (!teamId) { el.hidden = true; return; }
+      el.hidden = false;
+      const espnCode = espnCodes[teamName] || (codes[teamName] || '').toLowerCase();
+      el.onerror = function() {
+        el.onerror = function() { el.hidden = true; };
+        el.src = `https://a.espncdn.com/i/teamlogos/mlb/500/${espnCode}.png`;
+      };
+      el.src = `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+    }
+
+    const featureData = window.MODEL_FEATURES || null;
+    const a = $('team-a'), b = $('team-b');
+    for (const team of dataset) {
+      a.add(new Option(team.name, team.name));
+      b.add(new Option(team.name, team.name));
+    }
+    const params = new URLSearchParams(location.search);
+    a.value = byName.has(params.get('a')) ? params.get('a') : 'New York Yankees';
+    b.value = byName.has(params.get('b')) ? params.get('b') : 'New York Mets';
+    if (a.value === b.value) b.value = a.value === 'New York Mets' ? 'New York Yankees' : 'New York Mets';
+    displayLogo('select-logo-a', a.value);
+    displayLogo('select-logo-b', b.value);
+    a.addEventListener('change', () => displayLogo('select-logo-a', a.value));
+    b.addEventListener('change', () => displayLogo('select-logo-b', b.value));
+
+    // GoatCounter is optional. Tracking starts only when the owner supplies a site code.
+    const analyticsCode = typeof window.GOATCOUNTER_SITE === 'string' ? window.GOATCOUNTER_SITE.trim() : '';
+    if (/^[a-z0-9-]+$/.test(analyticsCode)) {
+      const script = document.createElement('script');
+      script.src = 'https://gc.zgo.at/count.js';
+      script.async = true;
+      script.dataset.goatcounter = `https://${analyticsCode}.goatcounter.com/count`;
+      document.head.appendChild(script);
+    }
+    function trackComparison() {
+      // Only count successful explicit button clicks, not initial display or Reset.
+      if (analyticsCode && window.goatcounter && typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({
+          path: 'compare-teams',
+          title: 'Completed matchup comparisons',
+          event: true,
+          no_session: true
+        });
+      }
+    }
+
+    const sliderNames = {
+      'R/G':'Runs per game', 'OPS':'OPS', 'SLG':'Slugging', 'OPS+':'Adjusted OPS',
+      'HR':'Home runs', 'BB':'Walks', 'SO':'Strikeouts (penalty)', 'SB':'Stolen bases', 'BA':'Batting average',
+      'RA/G':'Runs allowed per game', 'ERA':'Earned run average', 'ERA+':'Adjusted ERA',
+      'FIP':'Fielding-independent pitching', 'WHIP':'WHIP', 'H9':'Hits per 9',
+      'HR9':'Home runs per 9', 'BB9':'Walks per 9', 'SO9':'Strikeouts per 9'
+    };
+    const statControls = {offense: [], pitching: []};
+    const defaultWeights = featureData ? {
+      offense: featureData.defaultOffense.slice(), pitching: featureData.defaultPitching.slice()
+    } : {offense: [], pitching: []};
+    function makeSliders(kind, stats, defaults) {
+      const target = $(kind + '-sliders');
+      stats.forEach((stat, index) => {
+        const id = `${kind}-${index}`;
+        const line = document.createElement('div'); line.className = 'weight-line';
+        const label = document.createElement('label'); label.htmlFor = id;
+        label.textContent = sliderNames[stat] || stat;
+        const output = document.createElement('output'); output.htmlFor = id;
+        const input = document.createElement('input');
+        input.type = 'range'; input.id = id; input.min = stat === 'SO' && kind === 'offense' ? '-20' : '0';
+        input.max = stat === 'SO' && kind === 'offense' ? '0' : '60'; input.step = '1'; input.value = String(Math.round(defaults[index] * 100));
+        output.textContent = input.value + '%';
+        input.addEventListener('input', () => {output.textContent = input.value + '%'; updateWeightLabels();});
+        line.append(label, output); target.append(line, input);
+        statControls[kind].push({input, output});
+      });
+    }
+    if (featureData) {
+      makeSliders('offense', featureData.offenseStats, defaultWeights.offense);
+      makeSliders('pitching', featureData.pitchingStats, defaultWeights.pitching);
+    }
+    function getWeights(kind) { return statControls[kind].map(c => Number(c.input.value) / 100); }
+    function originalWeights() {
+      return Number($('mix').value) === 55 && ['offense','pitching'].every(kind =>
+        getWeights(kind).every((weight, i) => Math.abs(weight - defaultWeights[kind][i]) < 1e-9));
+    }
+    function updateWeightLabels() {
+      const offense = Number($('mix').value);
+      $('mix-output').textContent = `${offense}% / ${100 - offense}%`;
+      $('custom-flag').textContent = originalWeights() ? 'Using the original model weights.' : 'Custom weights: experimental, not validated.';
+    }
+    $('mix').addEventListener('input', updateWeightLabels);
+    function parseWeights(param, kind) {
+      const raw = params.get(param);
+      if (!raw || !featureData) return;
+      const values = raw.split(',').map(Number);
+      if (values.length !== statControls[kind].length || values.some((v,i) =>
+        !Number.isInteger(v) || v < Number(statControls[kind][i].input.min) || v > Number(statControls[kind][i].input.max))) return;
+      statControls[kind].forEach((control, i) => {control.input.value = String(values[i]); control.output.textContent = values[i] + '%';});
+    }
+    const initialMix = Number(params.get('mix'));
+    if (params.has('mix') && Number.isInteger(initialMix) && initialMix >= 0 && initialMix <= 100) $('mix').value = String(initialMix);
+    parseWeights('ow', 'offense'); parseWeights('pw', 'pitching');
+    updateWeightLabels();
+    if (!originalWeights()) $('tuning').open = true;
+    $('reset-weights').addEventListener('click', () => {
+      $('mix').value = '55';
+      for (const kind of ['offense','pitching']) {
+        statControls[kind].forEach((control,i) => {
+          control.input.value = String(Math.round(defaultWeights[kind][i] * 100));
+          control.output.textContent = control.input.value + '%';
+        });
+      }
+      updateWeightLabels(); render(false);
+    });
+
+    function scoreTeam(name) {
+      if (!featureData || !featureData.teams[name]) return byName.get(name);
+      const features = featureData.teams[name];
+      const scores = {};
+      for (const kind of ['offense','pitching']) {
+        const weights = getWeights(kind);
+        const denominator = weights.reduce((s,v) => s+v, 0);
+        if (denominator <= 0) return null;
+        scores[kind] = features[kind].reduce((s,v,i) => s+v*weights[i], 0) / denominator;
+      }
+      const fraction = Number($('mix').value)/100;
+      return {name, offense:scores.offense, pitching:scores.pitching,
+        total:scores.offense*fraction + scores.pitching*(1-fraction)};
+    }
+    function render(track=false) {
+      if (!byName.has(a.value) || !byName.has(b.value) || a.value === b.value) {
+        $('error').textContent = 'Please choose two different teams.';
+        return false;
+      }
+      const t1 = scoreTeam(a.value), t2 = scoreTeam(b.value);
+      if (!t1 || !t2 || !Number.isFinite(t1.total + t2.total) ||
+          t1.total < 0 || t2.total < 0 || t1.total + t2.total <= 0) {
+        $('error').textContent = 'These weights do not produce usable scores. Try increasing positive weights or reset to the defaults.';
+        return false;
+      }
+      $('error').textContent = '';
+      const sum = t1.total + t2.total;
+      const shareA = (t1.total / sum) * 100;
+      const shareB = (t2.total / sum) * 100;
+      $('name-a').textContent = t1.name;
+      $('name-b').textContent = t2.name;
+      $('badge-a').textContent = codes[t1.name] || 'MLB';
+      $('badge-b').textContent = codes[t2.name] || 'MLB';
+      displayLogo('result-logo-a', t1.name);
+      displayLogo('result-logo-b', t2.name);
+      $('percent-a').textContent = shareA.toFixed(1) + '%';
+      $('percent-b').textContent = shareB.toFixed(1) + '%';
+      $('share-a').style.width = shareA + '%';
+      $('score-track').setAttribute('aria-label', `${t1.name}: ${shareA.toFixed(1)}% of combined score; ${t2.name}: ${shareB.toFixed(1)}%`);
+      $('winner-name').textContent = Math.abs(t1.total - t2.total) < 1e-10 ? 'Even matchup' : (t1.total > t2.total ? t1.name : t2.name);
+      const offense = Number($('mix').value);
+      $('hero-offense').textContent = offense + '%';
+      $('hero-pitching').textContent = (100-offense) + '%';
+      $('offense-label').textContent = `/ ${offense}% weight`;
+      $('pitching-label').textContent = `/ ${100-offense}% weight`;
+      for (const [metric, prop] of [['off', 'offense'], ['pit', 'pitching']]) {
+        for (const [suffix, team] of [['a', t1], ['b', t2]]) {
+          $(`${metric}-label-${suffix}`).textContent = shortNames[team.name] || team.name;
+          $(`${metric}-val-${suffix}`).textContent = team[prop].toFixed(3);
+          $(`${metric}-bar-${suffix}`).style.width = Math.max(0, Math.min(100, team[prop] * 100)) + '%';
+        }
+      }
+      const next = new URL(location.href);
+      next.searchParams.set('a', t1.name);
+      next.searchParams.set('b', t2.name);
+      for (const key of ['mix','ow','pw']) next.searchParams.delete(key);
+      if (!originalWeights()) {
+        next.searchParams.set('mix', String(offense));
+        next.searchParams.set('ow', statControls.offense.map(c => c.input.value).join(','));
+        next.searchParams.set('pw', statControls.pitching.map(c => c.input.value).join(','));
+      }
+      try { history.replaceState(null, '', next.pathname + next.search + next.hash); } catch (_) {}
+      $('share').textContent = 'Copy link to this matchup ↗';
+      if (track) trackComparison();
+      return true;
+    }
+    $('compare').addEventListener('click', () => render(true));
+    $('share').addEventListener('click', async () => {
+      if (!render(false)) return;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(location.href);
+          $('share').textContent = 'Link copied ✓';
+        } else window.prompt('Copy this link:', location.href);
+      } catch (_) { window.prompt('Copy this link:', location.href); }
+    });
+    if (dataset.length === 30 && featureData && Object.keys(featureData.teams).length === 30) render(false);
+    else $('error').textContent = 'Model data is missing. Make sure scores.js and features.js are in the repository root.';
+  </script>
+</body>
+</html>
